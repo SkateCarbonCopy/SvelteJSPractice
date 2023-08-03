@@ -1,0 +1,7 @@
+# misc
+package-lock.json
+Svelte Error Messages Toggle.txt
+
+# unnecessary folders to store
+**/node_modules
+**/build
