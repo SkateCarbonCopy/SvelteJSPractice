@@ -56,16 +56,73 @@
     };
 
     if (id) {
-      meetups.updateMeetup(id, meetupData);
+      fetch(
+        `https://svelte-course-3a0d3-default-rtdb.firebaseio.com/meetups/${id}.json`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(meetupData),
+          headers: {
+            "Content-Type": "application-json",
+          },
+        }
+      )
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error("An error occurred, please try again.");
+          }
+          meetups.updateMeetup(id, meetupData);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     } else {
-      meetups.addMeetup(meetupData);
+      fetch(
+        "https://svelte-course-3a0d3-default-rtdb.firebaseio.com/meetups.json",
+        {
+          method: "POST",
+          body: JSON.stringify({ ...meetupData, isFavorite: false }),
+          headers: {
+            "Content-Type": "application-json",
+          },
+        }
+      )
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error("An error occurred, please try again.");
+          }
+          return res.json();
+        })
+        .then((data) => {
+          meetups.addMeetup({
+            ...meetupData,
+            isFavorite: false,
+            id: data.name,
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     }
 
     dispatch("save");
   }
 
   function deleteMeetup() {
-    meetups.removeMeetup(id);
+    fetch(
+      `https://svelte-course-3a0d3-default-rtdb.firebaseio.com/meetups/${id}.json`,
+      {
+        method: "DELETE"
+      }
+    )
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("An error occurred, please try again.");
+        }
+        meetups.removeMeetup(id);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
     dispatch("save");
   }
 
@@ -73,6 +130,12 @@
     dispatch("cancel");
   }
 </script>
+
+<style>
+  form {
+    width: 100%;
+  }
+</style>
 
 <Modal title="Edit Meetup Data" on:cancel>
   <form on:submit|preventDefault={submitForm}>
@@ -82,32 +145,28 @@
       valid={titleValid}
       validityMessage={"Please enter a valid title."}
       value={title}
-      on:input={(event) => (title = event.target.value)}
-    />
+      on:input={(event) => (title = event.target.value)} />
     <TextInput
       id="subtitle"
       label="Subtitle"
       valid={subtitleValid}
       validityMessage={"Please enter a valid subtitle."}
       value={subtitle}
-      on:input={(event) => (subtitle = event.target.value)}
-    />
+      on:input={(event) => (subtitle = event.target.value)} />
     <TextInput
       id="address"
       label="Address"
       valid={addressValid}
       validityMessage={"Please enter a valid address."}
       value={address}
-      on:input={(event) => (address = event.target.value)}
-    />
+      on:input={(event) => (address = event.target.value)} />
     <TextInput
       id="imageUrl"
       label="Image URL"
       valid={imageUrlValid}
       validityMessage={"Please enter a valid image URL."}
       value={imageUrl}
-      on:input={(event) => (imageUrl = event.target.value)}
-    />
+      on:input={(event) => (imageUrl = event.target.value)} />
     <TextInput
       id="email"
       label="Email"
@@ -115,8 +174,7 @@
       validityMessage={"Please enter a valid email."}
       value={email}
       on:input={(event) => (email = event.target.value)}
-      type="email"
-    />
+      type="email" />
     <TextInput
       id="description"
       label="Description"
@@ -124,20 +182,14 @@
       validityMessage={"Please enter a valid description."}
       bind:value={description}
       controlType="textarea"
-      rows="3"
-    />
+      rows="3" />
   </form>
   <div slot="footer">
     <Button type="button" mode="outline" on:click={cancel}>Cancel</Button>
-    <Button type="button" on:click={submitForm} disabled={!formIsvalid}>Save</Button>
+    <Button type="button" on:click={submitForm} disabled={!formIsvalid}
+      >Save</Button>
     {#if id}
       <Button type="button" on:click={deleteMeetup}>Delete</Button>
     {/if}
   </div>
 </Modal>
-
-<style>
-  form {
-    width: 100%;
-  }
-</style>
